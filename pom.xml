@@ -6,21 +6,47 @@
 
   <groupId>mylib.tools.misc</groupId>
   <artifactId>backuper</artifactId>
-  <version>1.0.0</version>
+  <version>0.1.0</version>
   <packaging>jar</packaging>
 
   <name>backuper</name>
-  <url>http://home/trac/JunseiS</url>
+  <url>https://github.com/jsugino/backuper</url>
 
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-compiler-plugin</artifactId>
+	<version>3.3</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.7</source>
+          <target>1.7</target>
           <encoding>UTF-8</encoding>
         </configuration>
+      </plugin>
+      <plugin>
+	<artifactId>maven-assembly-plugin</artifactId>
+	<configuration>
+	  <descriptorRefs>
+	    <descriptorRef>jar-with-dependencies</descriptorRef>
+	  </descriptorRefs>
+	  <archive>
+	    <manifest>
+	      <!-- main method name has to be specified -->
+	      <mainClass>mylib.tools.misc.Backuper</mainClass>
+	    </manifest>
+	  </archive>
+	</configuration>
+	<executions>
+	  <!-- this section is for to be made on package phase -->
+	  <execution>
+	    <id>make-assembly</id> <!-- this is used for inheritance merges -->
+	    <phase>package</phase> <!-- append to the packaging phase. -->
+	    <goals>
+	      <goal>single</goal> <!-- goals == mojos -->
+	    </goals>
+	  </execution>
+	</executions>
       </plugin>
     </plugins>
   </build>
@@ -28,7 +54,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>4.12</version>
       <scope>test</scope>
     </dependency>
     <!--

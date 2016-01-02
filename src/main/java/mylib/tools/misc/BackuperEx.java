@@ -685,5 +685,11 @@ public class BackuperEx
     {
       return "["+from.toString()+","+to.toString()+"]";
     }
+
+    @Override
+    public int hashCode()
+    {
+      return from.hashCode() + to.hashCode();
+    }
   }
 }

@@ -1,5 +1,6 @@
 package mylib.tools.misc;
 
+import static org.junit.Assert.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,10 +18,14 @@ import mylib.tools.misc.Backuper.FilePair;
 import mylib.tools.misc.Backuper.VirFile;
 import mylib.tools.misc.RemoteFile.FTPConnection;
 import mylib.tools.misc.RemoteFile;
-import mylib.util.DirMaker;
-import mylib.util.MylibTestCase;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import static mylib.tools.misc.BackuperTest.*;
+
 
 /**
 * このテストプログラムを実行するための条件：
@@ -37,15 +43,18 @@ import org.apache.commons.net.ftp.FTPReply;
 * ・c:/TEMP/work ファイルにテスト用の UserID と Password を設定する。
 * </ul>
 */
-public class BackuperFtpTest extends MylibTestCase
+public class BackuperFtpTest // extends MylibTestCase
 {
   public String testUID = null;
   public String testPass = null;
 
-  public BackuperFtpTest( String name )
+  public BackuperFtpTest( /* String name */ )
   {
-    super(name);
+    //super(name);
   }
+
+  @Rule
+  public TemporaryFolder tempdir = new TemporaryFolder(new File("target"));
 
   protected void setUp()
   throws Exception
@@ -60,6 +69,8 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * FTPClient クラスライブラリのテスト
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSampleFTP()
   throws Exception
   {
@@ -76,8 +87,8 @@ public class BackuperFtpTest extends MylibTestCase
       throw new Exception("login failed");
     }
 
-    File ftpdir = prepareTestDirectory("ftp");
-    File localdir = prepareTestDirectory("local");
+    File ftpdir = tempdir.newFolder("ftp");
+    File localdir = tempdir.newFolder("local");
 
     // ファイル受信
     touch(new File(ftpdir,"a"),"data a");
@@ -85,7 +96,7 @@ public class BackuperFtpTest extends MylibTestCase
     System.out.println("toFtpFile = "+toFtpFile(ftpdir,"a"));
     fp.retrieveFile(toFtpFile(ftpdir,"a"), os);// サーバー側
     os.close();
-    assertFile(localdir,"a","data a");
+    assertFile(localdir,"a",new String[]{"data a"},0);
 
     // ファイル送信
     touch(new File(localdir,"b"),"data b");
@@ -93,11 +104,12 @@ public class BackuperFtpTest extends MylibTestCase
     System.out.println("toFtpFile = "+toFtpFile(ftpdir,"b"));
     fp.storeFile(toFtpFile(ftpdir,"b"), is);// サーバー側
     is.close();
-    assertFile(ftpdir,"b","data b");
+    assertFile(ftpdir,"b",new String[]{"data b"},0);
 
     fp.disconnect();
   }
 
+  @Test
   public void testDriveName()
   {
     File file = new File("V:/top/sub/file");
@@ -112,10 +124,12 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * relate に関するテスト
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testRelate()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
     System.out.println("dir = "+dir);
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(dir));
 
@@ -145,6 +159,7 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * VirFile のコンストラクタのテスト
   */
+  @Test
   public void testVirFileConstructor()
   throws Exception
   {
@@ -167,15 +182,17 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * ファイルのテスト
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSingleFile()
   throws Exception
   {
-    File ftpdir = prepareTestDirectory();
+    File ftpdir = tempdir.getRoot();
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(ftpdir));
     long current = System.currentTimeMillis()/60000L*60000L;
     File filea = new File(ftpdir,"a"); touch(filea,"data a",current);
     RemoteFile rema = new RemoteFile("a",ftpcon);
-    assertFile(rema.openAsInputStream(),rema.relpath,"data a");
+    assertFile(rema.openAsInputStream(),rema.relpath,new String[]{"data a"},0);
     assertEquals("a",rema.getName());
     assertEquals(6L,rema.length());
     assertEquals(current,filea.lastModified());
@@ -190,10 +207,12 @@ public class BackuperFtpTest extends MylibTestCase
     ftpcon.disconnect();
   }
 
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSingleDir()
   throws Exception
   {
-    File ftpdir = prepareTestDirectory();
+    File ftpdir = tempdir.getRoot();
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(ftpdir));
     File filea = new File(ftpdir,"a"); touch(filea,"data a");
     File fileb = new File(ftpdir,"b"); touch(fileb,"data b");
@@ -201,8 +220,8 @@ public class BackuperFtpTest extends MylibTestCase
     RemoteFile top = new RemoteFile("/",ftpcon);
     RemoteFile list[] = (RemoteFile[])top.listFiles(new HashSet<Pattern>());
     assertEquals(
-      makeSet(new RemoteFile[]{new RemoteFile("a",ftpcon),new RemoteFile("b",ftpcon),new RemoteFile("c",ftpcon)}),
-      makeSet(list));
+      new HashSet(Arrays.asList(new RemoteFile[]{new RemoteFile("a",ftpcon),new RemoteFile("b",ftpcon),new RemoteFile("c",ftpcon)})),
+      new HashSet(Arrays.asList(list)));
     assertTrue(list[0].isFile());
     assertTrue(list[1].isFile());
     assertTrue(list[2].isFile());
@@ -218,11 +237,13 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * ディレクトリ内にファイルのみがある場合。
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSimple()
   throws Exception
   {
-    File dirloc = prepareTestDirectory("loc");
-    File dirftp = prepareTestDirectory("ftp");
+    File dirloc = tempdir.newFolder("loc");
+    File dirftp = tempdir.newFolder("ftp");
 
     long current = System.currentTimeMillis()/60000L*60000L;
 
@@ -254,10 +275,12 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * 長さが異なる場合。
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testLength()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
 
     long current = System.currentTimeMillis()/60000L*60000L;
 
@@ -316,25 +339,25 @@ public class BackuperFtpTest extends MylibTestCase
     **/
     long current = System.currentTimeMillis()/60000L*60000L - 120000L;
     File a = new File(dir,"a"); a.mkdir();
-    File a1 = new File(a,"1"); touch(a1,current);
-    File a2 = new File(a,"2"); touch(a2,current);
+    File a1 = new File(a,"1"); touch(a1,"",current);
+    File a2 = new File(a,"2"); touch(a2,"",current);
     File a4 = new File(a,"4"); a4.mkdir();
-    File a41 = new File(a4,"1"); touch(a41,current);
-    File a5 = new File(a,"5"); touch(a5,current);
+    File a41 = new File(a4,"1"); touch(a41,"",current);
+    File a5 = new File(a,"5"); touch(a5,"",current);
     File a6 = new File(a,"6"); a6.mkdir();
-    File a61 = new File(a6,"1"); touch(a61,current);
+    File a61 = new File(a6,"1"); touch(a61,"",current);
     File a62 = new File(a6,"2"); touch(a62,"abc",current);
 
     current += 60000L;
     File b = new File(dir,"b"); b.mkdir();
-    File b2 = new File(b,"2"); touch(b2,a2.lastModified());
-    File b3 = new File(b,"3"); touch(b3,current);
-    File b4 = new File(b,"4"); touch(b4,current);
+    File b2 = new File(b,"2"); touch(b2,"",a2.lastModified());
+    File b3 = new File(b,"3"); touch(b3,"",current);
+    File b4 = new File(b,"4"); touch(b4,"",current);
     File b5 = new File(b,"5"); b5.mkdir();
-    File b51 = new File(b5,"1"); touch(b51,current);
+    File b51 = new File(b5,"1"); touch(b51,"",current);
     File b6 = new File(b,"6"); b6.mkdir();
     File b62 = new File(b6,"2"); touch(b62,"def",current);
-    File b63 = new File(b6,"3"); touch(b63,current);
+    File b63 = new File(b6,"3"); touch(b63,"",current);
 
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(dir));
     Map<String,FTPConnection> ftpsettings = new HashMap();
@@ -356,10 +379,12 @@ public class BackuperFtpTest extends MylibTestCase
   * 同じ名前のファイルとディレクトリがあった場合のテスト：比較のみ。
   * doCompare のみ
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSimpleDir0()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
     Backuper target = prepareSimple(dir);
 
     assertDirectory(new File(dir,"b"),new String[][]{
@@ -376,10 +401,12 @@ public class BackuperFtpTest extends MylibTestCase
   * 同じ名前のファイルとディレクトリがあった場合のテスト：単純コピー。
   * doCompare(), doExecute()
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSimpleDir1()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
     Backuper target = prepareSimple(dir);
 
     long origmod = new File(dir,"a/6/2").lastModified();
@@ -404,10 +431,12 @@ public class BackuperFtpTest extends MylibTestCase
   * 同じ名前のファイルとディレクトリがあった場合のテスト：時刻違いのファイル比較付き。
   * doCompare(), compareTouchList(), doExecute()
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSimpleDir2()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
     Backuper target = prepareSimple(dir);
 
     target.compareTouchList(System.out);
@@ -446,7 +475,7 @@ public class BackuperFtpTest extends MylibTestCase
     File b22 = new File(b2,"2"); touch(b22,"data 1212",a12.lastModified());
     File b23 = new File(b2,"3"); touch(b23,"data 333333",current);
     File b3 = new File(b,"3"); b3.mkdir();
-    File b30 = new File(b3,"0"); touch(b30,current);
+    File b30 = new File(b3,"0"); touch(b30,"",current);
 
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(dir));
     Map<String,FTPConnection> ftpsettings = new HashMap();
@@ -468,10 +497,12 @@ public class BackuperFtpTest extends MylibTestCase
   * ディレクトリ内のファイル移動があった場合のテスト：単純コピー。
   * doCompare(), doExecute();
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testMove1()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
 
     Backuper target = prepareMove(dir);
 
@@ -489,10 +520,12 @@ public class BackuperFtpTest extends MylibTestCase
   * ディレクトリ内のファイル移動があった場合のテスト：ディレクトリ違いのファイルの比較付き。
   * doCompare(), compareMoveList(), doExecute();
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testMove2()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
 
     Backuper target = prepareMove(dir);
     target.compareMoveList(System.out);
@@ -511,10 +544,12 @@ public class BackuperFtpTest extends MylibTestCase
   /**
   * 同一ファイル名、同一時刻でも、完全に比較する場合のテスト。
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testSame()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
 
     long current = System.currentTimeMillis()/60000L*60000L - 120000L;
     File a = new File(dir,"a"); a.mkdir();
@@ -563,38 +598,37 @@ public class BackuperFtpTest extends MylibTestCase
   * RejectFile のテスト。
   * ソースディレクトリの不要ディレクトリの指定。
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testReject()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
     long current = System.currentTimeMillis()/60000L*60000L - 120000L;
 
-    File a, ax, ax1, ax2, axy, axy1, axy2, ay, ay1, ay2, az, az1, az2, azx, azx1, azx2, azxx, azxx1, azxx2, azxxy, azxxy1, azxxy2, b;
-    DirMaker mk = new DirMaker(dir);
-    mk.top().c(
-      a = mk.d("dira").c(
-	ax = mk.d("dirx").c(
-	  ax1 = mk.f("fileax1","data ax1",current),
-	  ax2 = mk.f("fileax2","data ax2",current),
-	  axy = mk.d("diry").c(
-	    axy1 = mk.f("fileaxy1","data axy1",current),
-	    axy2 = mk.f("fileaxy2","data axy2",current))),
-	ay = mk.d("diry").c(
-	  ay1 = mk.f("fileay1","data ay1",current),
-	  ay2 = mk.f("fileay2","data ay2",current)),
-	az = mk.d("dirz").c(
-	  az1 = mk.f("fileaz1","data az1",current),
-	  az2 = mk.f("fileaz2","data az2",current),
-	  azx = mk.d("dirx").c(
-	    azx1 = mk.f("fileazx1","data azx1",current),
-	    azx2 = mk.f("fileazx2","data azx2",current),
-	    azxx = mk.d("dirx").c(
-	      azxx1 = mk.f("fileazxx1","data azxx1",current),
-	      azxx2 = mk.f("fileazxx2","data azxx2",current),
-	      azxxy = mk.d("diry").c(
-		azxxy1 = mk.f("fileazxxy1","data azxxy1",current),
-		azxxy2 = mk.f("fileazxxy2","data azxxy2",current)))))),
-      b = mk.d("dirb").c());
+    File a      = tempdir.newFolder("dira");
+    File ax     = tempdir.newFolder("dira","dirx");
+    File ax1    = tempdir.newFile  ("dira/dirx/fileax1"); touch(ax1,"data ax1",current);
+    File ax2    = tempdir.newFile  ("dira/dirx/fileax2"); touch(ax2,"data ax2",current);
+    File axy    = tempdir.newFolder("dira/dirx/diry");
+    File axy1   = tempdir.newFile  ("dira/dirx/diry/fileaxy1"); touch(axy1,"data axy1",current);
+    File axy2   = tempdir.newFile  ("dira/dirx/diry/fileaxy2"); touch(axy2,"data axy2",current);
+    File ay     = tempdir.newFolder("dira/diry");
+    File ay1    = tempdir.newFile  ("dira/diry/fileay1"); touch(ay1,"data ay1",current);
+    File ay2    = tempdir.newFile  ("dira/diry/fileay2"); touch(ay2,"data ay2",current);
+    File az     = tempdir.newFolder("dira/dirz");
+    File az1    = tempdir.newFile  ("dira/dirz/fileaz1"); touch(az1,"data az1",current);
+    File az2    = tempdir.newFile  ("dira/dirz/fileaz2"); touch(az2,"data az2",current);
+    File azx    = tempdir.newFolder("dira/dirz/dirx");
+    File azx1   = tempdir.newFile  ("dira/dirz/dirx/fileazx1"); touch(azx1,"data azx1",current);
+    File azx2   = tempdir.newFile  ("dira/dirz/dirx/fileazx2"); touch(azx2,"data azx2",current);
+    File azxx   = tempdir.newFolder("dira/dirz/dirx/dirx");
+    File azxx1  = tempdir.newFile  ("dira/dirz/dirx/dirx/fileazxx1"); touch(azxx1,"data azxx1",current);
+    File azxx2  = tempdir.newFile  ("dira/dirz/dirx/dirx/fileazxx2"); touch(azxx2,"data azxx2",current);
+    File azxxy  = tempdir.newFolder("dira/dirz/dirx/dirx/diry");
+    File azxxy1 = tempdir.newFile  ("dira/dirz/dirx/dirx/diry/fileazxxy1"); touch(azxxy1,"data azxxy1",current);
+    File azxxy2 = tempdir.newFile  ("dira/dirz/dirx/dirx/diry/fileazxxy2"); touch(azxxy2,"data azxxy2",current);
+    File b      = tempdir.newFolder("dirb");
 
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(dir));
     Map<String,FTPConnection> ftpsettings = new HashMap();
@@ -605,7 +639,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.clearAll();
     target.doCompare(System.out);
 
-    assertCollectionEquals(
+    assertEquals(
       makeMyList(ftpcon,dir,
 	ax,ax1,ax2,axy,axy1,axy2,ay,ay1,ay2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2,azxxy,azxxy1,azxxy2
       ), target.fromOnlyList);
@@ -619,7 +653,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("diry");
     target.doCompare(System.out);
 
-    assertCollectionEquals(
+    assertEquals(
       makeMyList(ftpcon,dir,
 	ax,ax1,ax2,axy,axy1,axy2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2,azxxy,azxxy1,azxxy2
       ), target.fromOnlyList);
@@ -633,7 +667,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("dirx/diry");
     target.doCompare(System.out);
 
-    assertCollectionEquals(
+    assertEquals(
       makeMyList(ftpcon,dir,
 	ax,ax1,ax2,ay,ay1,ay2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2,azxxy,azxxy1,azxxy2
       ), target.fromOnlyList);
@@ -647,7 +681,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("dirx\\diry");
     target.doCompare(System.out);
 
-    assertCollectionEquals(
+    assertEquals(
       makeMyList(ftpcon,dir,
 	ax,ax1,ax2,ay,ay1,ay2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2,azxxy,azxxy1,azxxy2
       ), target.fromOnlyList);
@@ -661,7 +695,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("**/diry");
     target.doCompare(System.out);
 
-    assertCollectionEquals(
+    assertEquals(
       makeMyList(ftpcon,dir,
 	ax,ax1,ax2,ay,ay1,ay2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2
       ), target.fromOnlyList);
@@ -676,7 +710,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("diry");
     target.doCompare(System.out);
 
-    assertCollectionEquals(
+    assertEquals(
       makeMyList(ftpcon,dir,
 	ax,ax1,ax2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2
       ), target.fromOnlyList);
@@ -693,26 +727,25 @@ public class BackuperFtpTest extends MylibTestCase
   * RejectFile のテスト。
   * ファイル名が大文字小文字を無視するか。
   */
+  @Ignore("Need to use Jetty as a ftp server")
+  @Test
   public void testReject2()
   throws Exception
   {
-    File dir = prepareTestDirectory();
+    File dir = tempdir.getRoot();
     long current = System.currentTimeMillis()/60000L*60000L - 120000L;
 
-    File a, ax, ax1, ax2, ay, ay1, ay2, az, az1, az2, b;
-    DirMaker mk = new DirMaker(dir);
-    mk.top().c(
-      a = mk.d("dira").c(
-	ax = mk.d("dirx").c(
-	  ax1 = mk.f("file1","data ax1",current),
-	  ax2 = mk.f("File2","data ax2",current)),
-	ay = mk.d("diry").c(
-	  ay1 = mk.f("File1","data ay1",current),
-	  ay2 = mk.f("FILE2","data ay2",current)),
-	az = mk.d("dirz").c(
-	  az1 = mk.f("FILE1","data az1",current),
-	  az2 = mk.f("file2","data az2",current))),
-      b = mk.d("dirb").c());
+    File a   = tempdir.newFolder("dira");
+    File ax  = tempdir.newFolder("dira/dirx");
+    File ax1 = tempdir.newFile  ("dira/dirx/file1"); touch(ax1,"data ax1",current);
+    File ax2 = tempdir.newFile  ("dira/dirx/File2"); touch(ax2,"data ax2",current);
+    File ay  = tempdir.newFolder("dira/diry");
+    File ay1 = tempdir.newFile  ("dira/diry/File1"); touch(ay1,"data ay1",current);
+    File ay2 = tempdir.newFile  ("dira/diry/FILE2"); touch(ay2,"data ay2",current);
+    File az  = tempdir.newFolder("dira/dirz");
+    File az1 = tempdir.newFile  ("dira/dirz/FILE1"); touch(az1,"data az1",current);
+    File az2 = tempdir.newFile  ("dira/dirz/file2"); touch(az2,"data az2",current);
+    File b   = tempdir.newFolder("dirb");
 
     FTPConnection ftpcon = new FTPConnection("localhost",testUID,testPass,toFtpFile(dir));
     Map<String,FTPConnection> ftpsettings = new HashMap();
@@ -724,7 +757,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("**/file1");
     target.doCompare(System.out);
 
-    assertCollectionEquals(makeMyList(ftpcon,dir,ax,ax2,ay,ay2,az,az2),target.fromOnlyList);
+    assertEquals(makeMyList(ftpcon,dir,ax,ax2,ay,ay2,az,az2),target.fromOnlyList);
     assertEquals(new ArrayList<FilePair>(),target.sameList);
     assertEquals(new ArrayList<File>(),target.toOnlyList);
     assertEquals(new ArrayList<FilePair>(),target.touchList);
@@ -735,7 +768,7 @@ public class BackuperFtpTest extends MylibTestCase
     target.addRejectFile("**/FILE2");
     target.doCompare(System.out);
 
-    assertCollectionEquals(makeMyList(ftpcon,dir,ax,ax1,ay,ay1,az,az1),target.fromOnlyList);
+    assertEquals(makeMyList(ftpcon,dir,ax,ax1,ay,ay1,az,az1),target.fromOnlyList);
     assertEquals(new ArrayList<FilePair>(),target.sameList);
     assertEquals(new ArrayList<File>(),target.toOnlyList);
     assertEquals(new ArrayList<FilePair>(),target.touchList);
@@ -778,7 +811,7 @@ public class BackuperFtpTest extends MylibTestCase
     for ( int i = 0; i < files.length; ++i ) {
       myfiles[i] = new RealFile(files[i]);
     }
-    return makeList(myfiles);
+    return Arrays.asList(myfiles);
   }
 
   public static List<VirFile> makeMyList( FTPConnection ftpcon, String ... files )
@@ -787,7 +820,7 @@ public class BackuperFtpTest extends MylibTestCase
     for ( int i = 0; i < files.length; ++i ) {
       myfiles[i] = new RemoteFile(files[i],ftpcon);
     }
-    return makeList(myfiles);
+    return Arrays.asList(myfiles);
   }
 
   public static List<VirFile> makeMyList( FTPConnection ftpcon, File base, File ... files )
@@ -796,7 +829,7 @@ public class BackuperFtpTest extends MylibTestCase
     for ( int i = 0; i < files.length; ++i ) {
       myfiles[i] = new RemoteFile(toFtpFile(base,files[i]),ftpcon);
     }
-    return makeList(myfiles);
+    return Arrays.asList(myfiles);
   }
 
   /**
@@ -808,6 +841,6 @@ public class BackuperFtpTest extends MylibTestCase
     for ( int i = 0; i < pairs.length; i += 2 ) {
       pair[i/2] = new FilePair(new RemoteFile((String)pairs[i],ftpcon),new RealFile((File)pairs[i+1]));
     }
-    return makeList(pair);
+    return Arrays.asList(pair);
   }
 }
