@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import mylib.tools.misc.Backuper.VirFile;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPFileFilter;

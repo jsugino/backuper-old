@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import mylib.tools.misc.Backuper.FilePair;
-import mylib.tools.misc.Backuper.VirFile;
 import mylib.tools.misc.RemoteFile.FTPConnection;
 import mylib.tools.misc.RemoteFile;
 import org.apache.commons.net.ftp.FTPClient;

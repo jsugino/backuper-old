@@ -2,7 +2,6 @@ package mylib.tools.misc;
 
 import java.io.FileFilter;
 import java.io.FileOutputStream;
-import mylib.tools.misc.Backuper.VirFile;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
