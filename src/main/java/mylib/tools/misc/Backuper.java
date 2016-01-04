@@ -5,19 +5,21 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-import java.io.InputStream;
-import java.io.OutputStream;
-import mylib.tools.misc.RemoteFile.FTPConnection;
+import java.util.Set;
 import java.util.regex.Pattern;
+import mylib.tools.misc.RemoteFile.FTPConnection;
 
 /**
 * パックアップを実行するツールクラス。
@@ -94,10 +96,15 @@ public class Backuper
 	  break;
 	}
       }
-      if ( argv.length != cnt+2 ) {
+      if ( argv.length < cnt+2 ) {
 	usage();
       }
-      Backuper backuper = new Backuper(argv[cnt],argv[cnt+1]);
+      Backuper backuper;
+      if ( argv.length == cnt+2 ) {
+	backuper = new Backuper(argv[cnt],argv[cnt+1]);
+      } else {
+	backuper = new Backuper(argv[cnt],argv[cnt+1],argv[cnt+2]);
+      }
       for ( String rej : rejList ) {
 	backuper.addRejectFile(rej);
       }
@@ -127,7 +134,7 @@ public class Backuper
 
   public static void usage()
   {
-    System.err.println("usage : java [-stme] [-R rejectlist.txt] [-r rejectdir]... tools.misc.Backuper fromdir todir");
+    System.err.println("usage : java [-stme] [-R rejectlist.txt] [-r rejectdir]... tools.misc.Backuper fromdir todir [diffdir]");
     System.err.println("-s : compare file fully for same");
     System.err.println("-t : compare file fully for touch");
     System.err.println("-m : compare file fully for move");
@@ -150,6 +157,11 @@ public class Backuper
   public VirFile toDirectory;
 
   /**
+  * 差分出力先ディレクトリルート
+  */
+  public File diffDirectory;
+
+  /**
   * 同一だと想定できるもの。つまり、次のものが同一なもの。
   * <UL>
   * <LI>相対ディレクトリ = 同じ
@@ -166,13 +178,13 @@ public class Backuper
   public List<FilePair> sameList;
 
   /**
-  * 比較元にしか存在しないもの。
+  * 比較元にしか存在しないもの。ファイルが修正されていると判断されたものも含む。
   * なお、このリストにはディレクトリも含まれることに注意すること。
   */
   public List<VirFile> fromOnlyList;
 
   /**
-  * 比較先にしか存在しないもの。
+  * 比較先にしか存在しないもの。ファイルが修正されていると判断されたものも含む。
   * なお、このリストにはディレクトリも含まれることに注意すること。
   */
   public List<VirFile> toOnlyList;
@@ -216,7 +228,21 @@ public class Backuper
   public Backuper( String fromdir, String todir )
   throws IOException
   {
-    this(new File(fromdir),new File(todir));
+    this(fromdir,todir,(String)null);
+  }
+
+  /**
+  * バックアップツールオブジェクトを生成する。
+  *
+  * @param fromdir コピー元
+  * @param todir コピー先
+  * @param diffdir 差分出力先
+  * @exception IOException コピー元、コピー先のディレクトリが無い場合
+  */
+  public Backuper( String fromdir, String todir, String diffdir )
+  throws IOException
+  {
+    this(new File(fromdir),new File(todir),(diffdir == null ? null : new File(diffdir)));
   }
 
   /**
@@ -240,21 +266,42 @@ public class Backuper
   *
   * @param fromdir コピー元
   * @param todir コピー先
-  * @param ftpsettings FTP設定
   * @exception IOException コピー元、コピー先のディレクトリが無い場合
   */
   public Backuper( File fromdir, File todir )
   throws IOException
   {
-    fromDirectory = new RealFile(fromdir);
-    if ( !fromDirectory.isDirectory() ) {
-      throw new IOException(fromdir+" is not directory.");
-    }
-    toDirectory = new RealFile(todir);
-    if ( !toDirectory.isDirectory() ) {
-      throw new IOException(todir+" is not directory.");
-    }
+    this(fromdir,todir,null);
+  }
+
+  /**
+  * バックアップツールオブジェクトを生成する。
+  *
+  * @param fromdir コピー元
+  * @param todir コピー先
+  * @param diffdir 差分出力先
+  * @exception IOException コピー元、コピー先のディレクトリが無い場合
+  */
+  public Backuper( File fromdir, File todir, File diffdir )
+  throws IOException
+  {
+    fromDirectory = createRealFile(fromdir,"fromdir");
+    toDirectory   = createRealFile(todir,"todir");
+    diffDirectory = diffdir;
+
     setupFields();
+  }
+
+  public static RealFile createRealFile( File dir, String argname )
+  throws IOException
+  {
+    if ( dir == null ) {
+      throw new IOException(argname+" must be specified.");
+    }
+    if ( !dir.isDirectory() ) {
+      throw new IOException(dir+" is not a directory.");
+    }
+    return new RealFile(dir);
   }
 
   public void setupFields()
@@ -586,10 +633,11 @@ public class Backuper
   public void doExecute( PrintStream out )
   throws IOException
   {
+    final SimpleDateFormat DATEFORM = new SimpleDateFormat("-yyyyMMddHHmmss");
     boolean doit = true;
     while ( doit && !isListEmpty() ) {
       doit = false;
-      {
+      {	// sameList は、なにもせずにリストから取り除く
 	Iterator<FilePair> itr = sameList.iterator();
 	while ( itr.hasNext() ) {
 	  FilePair fpair = itr.next();
@@ -597,14 +645,37 @@ public class Backuper
 	  itr.remove(); doit = true;
 	}
       }
-      {
+      { // toOnlyList は、ディレクトリの下にファイルがなければ削除する。
 	Iterator<VirFile> itr = toOnlyList.iterator();
 	while ( itr.hasNext() ) {
 	  VirFile file = itr.next();
 	  if ( file.isFile() ) {
-	    out.println("del \""+file+"\"");
-	    if ( !file.delete() ) {
-	      throw new IOException("Cannot delete file: "+file);
+	    if ( diffDirectory == null ) {
+	      out.println("del \""+file+"\"");
+	      if ( !file.delete() ) {
+		throw new IOException("Cannot delete file: "+file);
+	      }
+	    } else {
+	      String timestamp = DATEFORM.format(new Date(file.lastModified()));
+	      VirFile tofile = relate(file,toDirectory,new RealFile(diffDirectory));
+	      String name = tofile.getName();
+	      int idx = name.lastIndexOf('.');
+	      if ( idx <= 0 ) {
+		name = name+timestamp;
+	      } else {
+		name = name.substring(0,idx)+timestamp+name.substring(idx);
+	      }
+	      VirFile parent = tofile.getParentFile();
+	      tofile = parent.makeSubFile(name);
+	      out.println("move \""+file+"\" \""+tofile+"\"");
+	      if ( !parent.exists() ) {
+		if ( !parent.mkdirs() ) {
+		  throw new IOException("Cannot mkdir (as backup): "+parent);
+		}
+	      }
+	      if ( !file.renameTo(tofile) ) {
+		throw new IOException("Cannot move (as backup): "+file+" "+tofile);
+	      }
 	    }
 	    itr.remove(); doit = true;
 	  } else if ( file.list().length == 0 ) {
@@ -616,7 +687,7 @@ public class Backuper
 	  }
 	}
       }
-      {
+      { // fromOnlyList は、ディレクトリがなければ作りつつ、コピーする。
 	Iterator<VirFile> itr = fromOnlyList.iterator();
 	while ( itr.hasNext() ) {
 	  VirFile file = itr.next();
@@ -635,7 +706,7 @@ public class Backuper
 	  }
 	}
       }
-      {
+      { // touchList は、タイムスタンプのみ更新する。
 	Iterator<FilePair> itr = touchList.iterator();
 	while ( itr.hasNext() ) {
 	  FilePair fpair = itr.next();
@@ -644,7 +715,7 @@ public class Backuper
 	  itr.remove(); doit = true;
 	}
       }
-      {
+      { // moveList は、コピー先のファイルシステム内で、ファイルを移動する。
 	Iterator<FilePair> itr = moveList.iterator();
 	while ( itr.hasNext() ) {
 	  FilePair fpair = itr.next();

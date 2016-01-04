@@ -70,6 +70,11 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return file.mkdir();
   }
 
+  public boolean mkdirs()
+  {
+    return file.mkdirs();
+  }
+
   public long lastModified()
   throws IOException
   {

@@ -13,6 +13,7 @@ public interface VirFile // extends Comparable<VirFile>
   public boolean exists();
   public boolean delete() throws IOException;
   public boolean mkdir();
+  public boolean mkdirs();
   public long lastModified() throws IOException;
   public boolean setLastModified( long modify );
   public boolean renameTo( VirFile tofile );

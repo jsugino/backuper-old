@@ -87,6 +87,11 @@ public class RemoteFile implements VirFile, Comparable<RemoteFile>
     return false;
   }
 
+  public boolean mkdirs()
+  {
+    return false;
+  }
+
   public long lastModified()
   throws IOException
   {

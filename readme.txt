@@ -4,10 +4,9 @@ java -jar backuper-<version>-jar-with-dependencies.jar from.dir to.dir [differ.d
 
 ----------------------------------------------------------------------
 差分ファイルの保存方法
-(※注) この機能は 2016/1/1 現在、まだ実装されていない
 
 ３番目の引数 differ.dir を指定すると、変更や削除されたファイルの元が保存される。
-(移動されたものについては、保存されない。)
+(移動されたファイルについては、保存されない。)
 
 たとえば、次のように、フォルダを指定したとする。
 	java -jar backuper.jar /orig/path /back/path /differ/path
@@ -24,5 +23,4 @@ java -jar backuper-<version>-jar-with-dependencies.jar from.dir to.dir [differ.d
 	/differ/path/dir1/file2-20150101120000.ext
 	/differ/path/dir1/file3-20150101090000.ext
 
-ファイルのタイムスタンプは、「以前の」日時(YYYYMMDDHHMMSS)を示す (バックアップした日時ではない)
-
+ファイルのタイムスタンプは、そのファイルの以前の日時(YYYYMMDDHHMMSS)を示す (バックアップした日時ではない)

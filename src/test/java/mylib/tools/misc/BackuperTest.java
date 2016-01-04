@@ -123,29 +123,30 @@ public class BackuperTest // extends MylibTestCase
   /**
   * 同じ名前のファイルとディレクトリがあった場合のテストの準備。
   */
-  public Backuper prepareSimple()
+  public Backuper prepareSimple( File dir )
   throws Exception
   {
     /**
     + a/1
     = a/2
-    + a/4
+    + a/4/
     + a/4/1
     + a/5
-    = a/6
+    = a/6/
     + a/6/1
     = a/6/2
 
     = b/2
     + b/3
     + b/4
-    + b/5
+    + b/5/
     + b/5/1
-    = b/6
+    = b/6/
     = b/6/2
     + b/6/3
     **/
-    long current = System.currentTimeMillis() - 10000L;
+    final long MIN = 60000L;
+    long current = System.currentTimeMillis()/MIN*MIN - 10*MIN;
     File a   = tempdir.newFolder("a");
     File a1  = tempdir.newFile  ("a/1"); a1.setLastModified(current);
     File a2  = tempdir.newFile  ("a/2"); a2.setLastModified(current);
@@ -156,18 +157,17 @@ public class BackuperTest // extends MylibTestCase
     File a61 = tempdir.newFile  ("a/6/1"); a61.setLastModified(current);
     File a62 = tempdir.newFile  ("a/6/2"); touch(a62,"abc",current);
 
-    current += 10000L;
     File b   = tempdir.newFolder("b");
     File b2  = tempdir.newFile  ("b/2"); b2.setLastModified(a2.lastModified());
-    File b3  = tempdir.newFile  ("b/3"); b3.setLastModified(current);
-    File b4  = tempdir.newFile  ("b/4"); b4.setLastModified(current);
+    File b3  = tempdir.newFile  ("b/3"); b3.setLastModified(current+1*MIN);
+    File b4  = tempdir.newFile  ("b/4"); b4.setLastModified(current+2*MIN);
     File b5  = tempdir.newFolder("b","5");
-    File b51 = tempdir.newFile  ("b/5/1"); b51.setLastModified(current);
+    File b51 = tempdir.newFile  ("b/5/1"); b51.setLastModified(current+3*MIN);
     File b6  = tempdir.newFolder("b","6");
-    File b62 = tempdir.newFile  ("b/6/2"); touch(b62,"def",current);
-    File b63 = tempdir.newFile  ("b/6/3"); b63.setLastModified(current);
+    File b62 = tempdir.newFile  ("b/6/2"); touch(b62,"def",current+4*MIN);
+    File b63 = tempdir.newFile  ("b/6/3"); b63.setLastModified(current+5*MIN);
 
-    Backuper target = new Backuper(a,b);
+    Backuper target = new Backuper(a,b,dir);
 
     target.doCompare(System.out);
 
@@ -259,7 +259,7 @@ public class BackuperTest // extends MylibTestCase
   public void testSimpleDir0()
   throws Exception
   {
-    Backuper target = prepareSimple();
+    Backuper target = prepareSimple(null);
 
     assertDirectory(new File(tempdir.getRoot(),"b"),new String[][]{
       { "2" },
@@ -279,10 +279,10 @@ public class BackuperTest // extends MylibTestCase
   public void testSimpleDir1()
   throws Exception
   {
-    Backuper target = prepareSimple();
+    Backuper target = prepareSimple(null);
 
     long origmod = new File(tempdir.getRoot(),"a/6/2").lastModified();
-    assertEquals(origmod+10000L,new File(tempdir.getRoot(),"b/6/2").lastModified());
+    assertEquals(origmod+4L*60000L,new File(tempdir.getRoot(),"b/6/2").lastModified());
 
     System.out.println("----------------------------------------");
     target.doExecute(System.out);
@@ -307,7 +307,7 @@ public class BackuperTest // extends MylibTestCase
   public void testSimpleDir2()
   throws Exception
   {
-    Backuper target = prepareSimple();
+    Backuper target = prepareSimple(null);
 
     target.compareTouchList(System.out);
 
@@ -331,24 +331,24 @@ public class BackuperTest // extends MylibTestCase
   public Backuper prepareMove( File dir )
   throws Exception
   {
-    long current = System.currentTimeMillis() - 10000L;
+    final long MIN = 60000L;
+    long current = System.currentTimeMillis()/MIN*MIN - 3*MIN;
 
     File a   = tempdir.newFolder("a");
     File a1  = tempdir.newFolder("a","1");
     File a11 = tempdir.newFile("a/1/1"); touch(a11,"data 11",current);
     File a12 = tempdir.newFile("a/1/2"); touch(a12,"data 2222",current);
     File a13 = tempdir.newFile("a/1/3"); touch(a13,"data 333333",current);
-    
-    current += 10000L;
+
     File b   = tempdir.newFolder("b");
     File b2  = tempdir.newFolder("b","2");
     File b21 = tempdir.newFile("b/2/1"); touch(b21,"data 11",a11.lastModified());
     File b22 = tempdir.newFile("b/2/2"); touch(b22,"data 1212",a12.lastModified());
-    File b23 = tempdir.newFile("b/2/3"); touch(b23,"data 333333",current);
+    File b23 = tempdir.newFile("b/2/3"); touch(b23,"data 333333",current+1*MIN);
     File b3  = tempdir.newFolder("b","3");
-    File b30 = tempdir.newFile("b/3/0"); touch(b30,"",current);
+    File b30 = tempdir.newFile("b/3/0"); touch(b30,"",current+2*MIN);
 
-    Backuper target = new Backuper(a,b);
+    Backuper target = new Backuper(a,b,dir);
 
     target.doCompare(System.out);
 
@@ -369,8 +369,7 @@ public class BackuperTest // extends MylibTestCase
   public void testMove1()
   throws Exception
   {
-    File dir = tempdir.getRoot();
-    Backuper target = prepareMove(dir);
+    Backuper target = prepareMove(null);
 
     System.out.println("----------------------------------------");
     target.doExecute(System.out);
@@ -390,8 +389,7 @@ public class BackuperTest // extends MylibTestCase
   public void testMove2()
   throws Exception
   {
-    File dir = tempdir.getRoot();
-    Backuper target = prepareMove(dir);
+    Backuper target = prepareMove(null);
     target.compareMoveList(System.out);
 
     System.out.println("----------------------------------------");
@@ -402,6 +400,145 @@ public class BackuperTest // extends MylibTestCase
       { "1/2", "data 2222" },
       { "1/3", "data 333333" },
     });
+  }
+
+  @Test
+  public void testBackup1()
+  throws Exception
+  {
+    File dir = tempdir.newFolder("c");
+    Backuper target = prepareSimple(dir);
+    String tc3  = getTimestamp(new File(tempdir.getRoot(),"b/3*").toString());
+    String tc4  = getTimestamp(new File(tempdir.getRoot(),"b/4*").toString());
+    String tc51 = getTimestamp(new File(tempdir.getRoot(),"b/5/1*").toString());
+    String tc62 = getTimestamp(new File(tempdir.getRoot(),"b/6/2*").toString());
+    String tc63 = getTimestamp(new File(tempdir.getRoot(),"b/6/3*").toString());
+
+
+    target.compareTouchList(System.out);
+
+    System.out.println("----------------------------------------");
+    target.doExecute(System.out);
+
+    assertDirectory(new File(tempdir.getRoot(),"b"),new String[][]{
+      { "1" },
+      { "2" },
+      { "4/1" },
+      { "5" },
+      { "6/1" },
+      { "6/2", "abc" },
+    });
+
+    assertDirectory(new File(tempdir.getRoot(),"c"),new String[][]{
+	{ "3-"+tc3 },
+	{ "4-"+tc4 },
+	{ "5/1-"+tc51 },
+	{ "6/2-"+tc62, "def" },
+	{ "6/3-"+tc63 },
+      });
+  }
+
+  @Test
+  public void testBackup2()
+  throws Exception
+  {
+    File dir = tempdir.newFolder("c");
+    Backuper target = prepareMove(dir);
+    String tc22 = getTimestamp(new File(tempdir.getRoot(),"b/2/2*").toString());
+    String tc23 = getTimestamp(new File(tempdir.getRoot(),"b/2/3*").toString());
+    String tc30 = getTimestamp(new File(tempdir.getRoot(),"b/3/0*").toString());
+    target.compareMoveList(System.out);
+
+    System.out.println("----------------------------------------");
+    target.doExecute(System.out);
+    /*{
+      byte buf[] = new byte[1024];
+      Process proc = Runtime.getRuntime().exec("cmd /c dir /S "+tempdir.getRoot());
+      InputStream in = proc.getInputStream();
+      int len;
+      while ( (len = in.read(buf)) > 0 ) {
+	System.out.write(buf,0,len);
+      }
+      proc.waitFor();
+    }*/
+
+    assertDirectory(new File(tempdir.getRoot(),"b"),new String[][]{
+	{ "1/1", "data 11" },
+	{ "1/2", "data 2222" },
+	{ "1/3", "data 333333" },
+      });
+
+    assertNotEquals(tc22,tc30);
+    assertDirectory(new File(tempdir.getRoot(),"c"),new String[][]{
+	{ "2/2-"+tc22, "data 1212" },
+	{ "2/3-"+tc23, "data 333333" },
+	{ "3/0-"+tc30 },
+      });
+  }
+
+  @Test
+  public void testBackup3()
+  throws Exception
+  {
+    final long MIN = 60000L;
+    long current = System.currentTimeMillis()/MIN*MIN - 10*MIN;
+
+    File dira = tempdir.newFolder("a");
+    File a1   = tempdir.newFile  ("a/1.ext"); touch(a1,"a/1.ext",current);
+    File dirb = tempdir.newFolder("b");
+    File b1   = tempdir.newFile  ("b/abc");        b1.setLastModified(current+1*MIN);
+    File b2   = tempdir.newFile  ("b/def.ext");    b2.setLastModified(current+2*MIN);
+    File b3   = tempdir.newFile  ("b/gh.ext.ext"); b3.setLastModified(current+3*MIN);
+    File b4   = tempdir.newFile  ("b/.ijk");       b4.setLastModified(current+4*MIN);
+    File b5   = tempdir.newFile  ("b/.lmn.ext");   b5.setLastModified(current+5*MIN);
+    File dirc = tempdir.newFolder("c");
+    String tb1 = getTimestamp(new File(tempdir.getRoot(),"b/abc*").toString());
+    String tb2 = getTimestamp(new File(tempdir.getRoot(),"b/def.ext*").toString());
+    String tb3 = getTimestamp(new File(tempdir.getRoot(),"b/gh.ext.ext*").toString());
+    String tb4 = getTimestamp(new File(tempdir.getRoot(),"b/.ijk*").toString());
+    String tb5 = getTimestamp(new File(tempdir.getRoot(),"b/.lmn.ext*").toString());
+
+    System.out.println("----------------------------------------");
+    Backuper target = new Backuper(dira,dirb,dirc);
+
+    target.doCompare(System.out);
+    target.compareMoveList(System.out);
+    target.doExecute(System.out);
+
+    assertDirectory(dirb,new String[][]{
+	{ "1.ext", "a/1.ext" },
+      });
+
+    assertDirectory(dirc,new String[][]{
+	{ "abc-"+tb1 },
+	{ "def-"+tb2+".ext" },
+	{ "gh.ext-"+tb3+".ext" },
+	{ ".ijk-"+tb4 },
+	{ ".lmn-"+tb5+".ext" },
+      });
+  }
+
+  public static String getTimestamp( String file )
+  throws IOException, InterruptedException
+  {
+    String cmd = "cmd /c dir "+file;
+    Process proc = Runtime.getRuntime().exec(cmd);
+    BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+    String line;
+    StringBuffer sbuf = new StringBuffer();
+    while ( (line = in.readLine()) != null ) {
+      if ( line.length() > 0 && line.charAt(0) != ' ' ) {
+	int idx = 0;
+	sbuf.append(line,idx,idx+=4); idx += 1;
+	sbuf.append(line,idx,idx+=2); idx += 1;
+	sbuf.append(line,idx,idx+=2); idx += 2;
+	sbuf.append(line,idx,idx+=2); idx += 1;
+	sbuf.append(line,idx,idx+=2);
+	sbuf.append("00");
+      }
+    }
+    proc.waitFor();
+    return sbuf.toString();
   }
 
   // ----------------------------------------------------------------------
@@ -495,7 +632,7 @@ public class BackuperTest // extends MylibTestCase
     assertEquals(
       new HashSet(makeMyList(
 	  ax,ax1,ax2,axy,axy1,axy2,ay,ay1,ay2,az,az1,az2,azx,azx1,azx2,azxx,azxx1,azxx2,azxxy,azxxy1,azxxy2
-	)), 
+	)),
       new HashSet(target.fromOnlyList));
     assertEquals(new ArrayList<FilePair>(),target.sameList);
     assertEquals(new ArrayList<File>(),target.toOnlyList);
