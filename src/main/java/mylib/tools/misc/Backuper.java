@@ -86,6 +86,8 @@ public class Backuper
 	      break;
 	     case 'R':
 	      addRejectList(argv[++cnt],rejList);
+	     case 'j':
+	      filesystem = java.nio.file.FileSystems.getDefault();
 	      break;
 	     default:
 	      usage();
@@ -140,8 +142,20 @@ public class Backuper
     System.err.println("-m : compare file fully for move");
     System.err.println("-e : execute copy files");
     System.err.println("-R : reject directory file list");
+    System.err.println("-j : ignore junction file");
     System.err.println("-r : reject directory(relative from fromdir)");
     System.exit(1);
+  }
+
+  // ----------------------------------------------------------------------
+  public static java.nio.file.FileSystem filesystem = null;
+
+  public static boolean isSymlink( String file )
+  throws IOException
+  {
+    if ( filesystem == null ) return false;
+    java.nio.file.Path path = filesystem.getPath(file);
+    return !path.equals(path.toRealPath());
   }
 
   // ----------------------------------------------------------------------

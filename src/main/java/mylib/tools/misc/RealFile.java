@@ -127,7 +127,13 @@ public class RealFile implements VirFile, Comparable<RealFile>
   {
     File filelist[] = file.listFiles(new FileFilter(){
       public boolean accept( File pathname ) {
-	String target = pathname.toString().replace('\\','/');
+	String target = pathname.toString();
+	try {
+	  if ( Backuper.isSymlink(target) ) return false;
+	} catch ( IOException ex ) {
+	  System.out.println("IOException ("+ex.getMessage()+")occured, but ignored");
+	}
+	target = target.replace('\\','/');
 	for ( Pattern pat : rejects ) {
 	  if ( pat.matcher(target).matches() ) return false;
 	}
