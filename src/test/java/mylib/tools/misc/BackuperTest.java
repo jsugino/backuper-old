@@ -763,6 +763,101 @@ public class BackuperTest // extends MylibTestCase
     assertEquals(new ArrayList<File>(),target.moveList);
   }
 
+  @Test
+  public void testReject3()
+  throws Exception
+  {
+    File a  = tempdir.newFolder("dira");
+    File a1 = tempdir.newFile("dira/NTUSER.DAT");
+    File a2 = tempdir.newFile("dira/ntuser.dat.LOG1");
+    File a3 = tempdir.newFile("dira/ntuser.dat.LOG2");
+    File a4 = tempdir.newFile("dira/NTUSER.DAT{016888bd-6c6f-11de-8d1d-001e0bcde3ec}.TM.blf");
+    File a5 = tempdir.newFile("dira/NTUSER.DAT{016888bd-6c6f-11de-8d1d-001e0bcde3ec}.TMContainer1.regtrans-ms");
+    File a6 = tempdir.newFile("dira/NTUSER.DAT{016888bd-6c6f-11de-8d1d-001e0bcde3ec}.TMContainer2.regtrans-ms");
+    File a7 = tempdir.newFile("dira/ntuser.ini");
+    File b  = tempdir.newFolder("dirb");
+
+    Backuper target = new Backuper(a,b);
+
+    //------------------------------
+    target.clearAll();
+    target.addRejectFile("ntuser.*");
+    target.doCompare(System.out);
+
+    assertEquals(new ArrayList<VirFile>(),target.fromOnlyList);
+    assertEquals(new ArrayList<FilePair>(),target.sameList);
+    assertEquals(new ArrayList<File>(),target.toOnlyList);
+    assertEquals(new ArrayList<FilePair>(),target.touchList);
+    assertEquals(new ArrayList<File>(),target.moveList);
+  }
+
+  @Test
+  public void testReject4()
+  throws Exception
+  {
+    File a  = tempdir.newFolder("dira");
+    File d1 = tempdir.newFolder("dira","cygwinjunsei");
+    File d2 = tempdir.newFolder("dira","cygwinjunsei","work");
+    File d3 = tempdir.newFolder("dira","cygwinjunsei","work","backuper");
+    File d4 = tempdir.newFolder("dira","cygwinjunsei","work","backuper","target");
+    File d5 = tempdir.newFolder("dira","cygwinjunsei","work","hitigo");
+    File d6 = tempdir.newFolder("dira","cygwinjunsei","work","hitigo","target");
+    File a1 = tempdir.newFile  ("dira/cygwinjunsei/a1");
+    File a2 = tempdir.newFile  ("dira/cygwinjunsei/work/a2");
+    File a3 = tempdir.newFile  ("dira/cygwinjunsei/work/backuper/a3");
+    File a4 = tempdir.newFile  ("dira/cygwinjunsei/work/backuper/target/a4");
+    File a5 = tempdir.newFile  ("dira/cygwinjunsei/work/hitigo/a5");
+    File a6 = tempdir.newFile  ("dira/cygwinjunsei/work/hitigo/target/a6");
+    File b  = tempdir.newFolder("dirb");
+
+    Backuper target = new Backuper(a,b);
+
+    //------------------------------
+    target.clearAll();
+    target.addRejectFile("cygwinjunsei/work/*/target");
+    target.doCompare(System.out);
+
+    assertEquals(makeMyList(d1,a1,d2,a2,d3,a3,d5,a5),target.fromOnlyList);
+    assertEquals(new ArrayList<FilePair>(),target.sameList);
+    assertEquals(new ArrayList<File>(),target.toOnlyList);
+    assertEquals(new ArrayList<FilePair>(),target.touchList);
+    assertEquals(new ArrayList<File>(),target.moveList);
+  }
+
+  @Test
+  public void testReject5()
+  throws Exception
+  {
+    File a  = tempdir.newFolder("dira");
+    File d1 = tempdir.newFolder("dira","cygwinjunsei");
+    File d2 = tempdir.newFolder("dira","cygwinjunsei","work");
+    File d3 = tempdir.newFolder("dira","cygwinjunsei","work","backuper");
+    File a1 = tempdir.newFile  ("dira/cygwinjunsei/a1");
+    File a2 = tempdir.newFile  ("dira/cygwinjunsei/#a2#");
+    File a3 = tempdir.newFile  ("dira/cygwinjunsei/a3~");
+    File a4 = tempdir.newFile  ("dira/cygwinjunsei/work/a4");
+    File a5 = tempdir.newFile  ("dira/cygwinjunsei/work/#a5#");
+    File a6 = tempdir.newFile  ("dira/cygwinjunsei/work/a6~");
+    File a7 = tempdir.newFile  ("dira/cygwinjunsei/work/backuper/a7");
+    File a8 = tempdir.newFile  ("dira/cygwinjunsei/work/backuper/#a8#");
+    File a9 = tempdir.newFile  ("dira/cygwinjunsei/work/backuper/a9~");
+    File b  = tempdir.newFolder("dirb");
+
+    Backuper target = new Backuper(a,b);
+
+    //------------------------------
+    target.clearAll();
+    target.addRejectFile("cygwinjunsei/**/#*#");
+    target.addRejectFile("cygwinjunsei/**/*~");
+    target.doCompare(System.out);
+
+    assertEquals(new HashSet(makeMyList(d1,a1,a2,a3,d2,a4,d3,a7)),new HashSet(target.fromOnlyList));
+    assertEquals(new ArrayList<FilePair>(),target.sameList);
+    assertEquals(new ArrayList<File>(),target.toOnlyList);
+    assertEquals(new ArrayList<FilePair>(),target.touchList);
+    assertEquals(new ArrayList<File>(),target.moveList);
+  }
+
   // ----------------------------------------------------------------------
   /**
   * FilePair のテスト。

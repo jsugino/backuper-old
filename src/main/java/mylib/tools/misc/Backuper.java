@@ -356,15 +356,28 @@ public class Backuper
     // TODO: 本来は fromDirectory だけでなく、toDirectory についても、考慮すべき。
     // TODO: Windows と ftp で CASE_INSENSITIVE の考え方が異なる。
 
-    String pat;
+    StringBuffer pat = new StringBuffer(Pattern.quote(fromDirectory.toString().replace('\\','/')));
+    pat.append('/');
     reject = reject.toLowerCase().replace('\\','/');
     if ( reject.startsWith("**/") ) {
-      pat = ".*/"+Pattern.quote(reject.substring(3));
-    } else {
-      pat = Pattern.quote(reject);
+      pat.append(".*/");
+      reject = reject.substring(3);
     }
-    pat = Pattern.quote(fromDirectory.toString().replace('\\','/'))+"/"+pat;
-    rejectFileSet.add(Pattern.compile(pat,Pattern.CASE_INSENSITIVE));
+    int idx;
+    while ( (idx = reject.indexOf('*')) >= 0 ) {
+      if ( idx > 0 ) {
+	pat.append(Pattern.quote(reject.substring(0,idx)));
+      }
+      if ( idx+1 < reject.length() && reject.charAt(idx+1) == '*' ) {
+	pat.append(".*");
+	++idx;
+      } else {
+	pat.append("[^/]*");
+      }
+      reject = reject.substring(idx+1);
+    }
+    if ( reject.length() > 0 ) pat.append(Pattern.quote(reject));
+    rejectFileSet.add(Pattern.compile(pat.toString(),Pattern.CASE_INSENSITIVE));
   }
 
   /**
