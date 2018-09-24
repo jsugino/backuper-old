@@ -521,6 +521,20 @@ public class BackuperTest // extends MylibTestCase
   public static String getTimestamp( String file )
   throws IOException, InterruptedException
   {
+    String osname = System.getProperty("os.name");
+    System.out.println("osname = "+osname);
+    if ( osname.startsWith("Linux") ) {
+      return getTimestampLinux(file);
+    } else if ( osname.startsWith("Windows") ) {
+      return getTimestampWindows(file);
+    } else {
+      throw new IOException("unknow os "+osname);
+    }
+  }
+
+  public static String getTimestampWindows( String file )
+  throws IOException, InterruptedException
+  {
     String cmd = "cmd /c dir "+file;
     Process proc = Runtime.getRuntime().exec(cmd);
     BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -538,6 +552,36 @@ public class BackuperTest // extends MylibTestCase
       }
     }
     proc.waitFor();
+    return sbuf.toString();
+  }
+
+  public static String getTimestampLinux( String file )
+  throws IOException, InterruptedException
+  {
+    String cmd = "/bin/sh -c 'ls --full-time "+file+"'";
+    System.out.println("invoke "+cmd);
+    Process proc = Runtime.getRuntime().exec(new String[]{
+	"/bin/sh","-c","ls --full-time "+file});
+    System.out.println("invoked");
+    BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+    String line;
+    StringBuffer sbuf = new StringBuffer();
+    while ( (line = in.readLine()) != null ) {
+      System.out.println("line = "+line);
+      int idx = 0;
+      for ( int i = 0; i < 5; ++i ) {
+	idx = line.indexOf(' ',idx)+1;
+      }
+      System.out.println("rest = "+line.substring(idx));
+      sbuf.append(line,idx,idx+=4); idx += 1;
+      sbuf.append(line,idx,idx+=2); idx += 1;
+      sbuf.append(line,idx,idx+=2); idx += 1;
+      sbuf.append(line,idx,idx+=2); idx += 1;
+      sbuf.append(line,idx,idx+=2);
+      sbuf.append("00");
+    }
+    proc.waitFor();
+    System.out.println("return");
     return sbuf.toString();
   }
 
