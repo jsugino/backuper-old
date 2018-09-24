@@ -1,61 +1,68 @@
+ToDo:
+・不必要に見える move がある。Debug.debug1() を使って、デバッグすること。
+
+----------------------------------------------------------------------
+2018/9/24
+・Linux からもバックアップ処理ができるか試してみた。
+
 ----------------------------------------------------------------------
 2016/1/10
-�EFTP�̃e�X�g���ʂ�悤�ɂ����B
-�E�������A�܂��Amain �ɂ͑g�݂���Ă��Ȃ��B
+・FTPのテストが通るようにした。
+・ただし、まだ、main には組みこれていない。
 
 ----------------------------------------------------------------------
 2016/1/9
-�E../**/.. �� file.* �ȂǂɑΉ������B
+・../**/.. や file.* などに対応した。
 
 [ToDo]
-�E���[�J�����|�W�g�� .git �ɓo�^����Ă���t�@�C���ɂ��ẮA�o�b�N�A�b�v�����Ȃ��悤�ɂ���B
-  (.git ���̂��̂̃o�b�N�A�b�v�����悤�ɂ���)
+・ローカルリポジトリ .git に登録されているファイルについては、バックアップを取らないようにする。
+  (.git そのもののバックアップを取るようにする)
 
 ----------------------------------------------------------------------
 2016/1/4
-�E�o�b�N�A�b�v����ۂɁA�Â����̂�ʃt�H���_�Ƀt�@�C�����Ƀ^�C���X�^���v�����ĕۑ��ł���悤�ɂ����B
-�EWindows Junction �̓o�b�N�A�b�v�Ώۂ���͂������Ƃ��ł���悤�ɂ����B
+・バックアップする際に、古いものを別フォルダにファイル名にタイムスタンプをつけて保存できるようにした。
+・Windows Junction はバックアップ対象からはずすことができるようにした。
 
 [Done]
-�E�V���{���b�N�����N�̓o�b�N�A�b�v�Ώۂ���͂����B[Done 2016/1/4]
-�E�ΏۊO�t�@�C���̎w����@�ɂ��āA"**/" �����łȂ� "/**/" ".../file*" �ȂǂɑΉ�����B[Done 2016/1/9]
-  - ���̎d�l�́Aant �̃p�X�w����@���Q�l�ɂ���B https://ant.apache.org/manual/Types/fileset.html
+・シンボリックリンクはバックアップ対象からはずす。[Done 2016/1/4]
+・対象外ファイルの指定方法について、"**/" だけでなく "/**/" ".../file*" などに対応する。[Done 2016/1/9]
+  - その仕様は、ant のパス指定方法を参考にする。 https://ant.apache.org/manual/Types/fileset.html
 
 ----------------------------------------------------------------------
 2016/1/3
-�E���ۂɃo�b�N�A�b�v�������s���������邱�Ƃ��m�F�����B
-�E���̍ہABackuper.java �ɂ����� VirFile ���A�P�Ƃ̃t�@�C���Ƃ��Ď��o�����B
+・実際にバックアップ処理を行い成功することを確認した。
+・その際、Backuper.java にあった VirFile を、単独のファイルとして取り出した。
 
 [ToDo]
-�E�폜�t�@�C�����̏���l���w��ł���悤�ɂ���B
-  (���܂�ɂ�������̃t�@�C���̍폜������ꍇ�A�����ԈႢ���������Ƒz�肳��邽��)
-�E�����ۑ��̂��߂̃v���O�����͍�������e�X�g���܂��B�e�X�g�����邱�ƁB[Done 2016/1/4]
+・削除ファイル数の上限値を指定できるようにする。
+  (あまりにたくさんのファイルの削除がある場合、何か間違いがあったと想定されるため)
+・差分保存のためのプログラムは作ったがテストがまだ。テストをすること。[Done 2016/1/4]
 
 ----------------------------------------------------------------------
 2016/1/2
-�E�e�X�g�v���O���������삷��悤�ɂ����B
+・テストプログラムが動作するようにした。
 
 [ToDo]
-�EFTP�Ή��͂܂��s�\���Bmain�ɑg�ݍ��ށB
-�EFTP�̃e�X�g�͒ʂ�悤�ɂ���B[Done 2016/1/10]
-�E�����ۑ��ł���悤�ɂ���B(�����ۑ��̎d�l�� readme.txt ���Q��)[Done 2016/1/4]
-�EMD5���g������r���ł���悤�ɂ���B
-  - BackuperEx.java �ɕ����I�Ɏ�������Ă��邪�s�\��
-  - Backuper.java �� VirFile ��p���Ď������Ȃ����̂��悳�����B
+・FTP対応はまだ不十分。mainに組み込む。
+・FTPのテストは通るようにする。[Done 2016/1/10]
+・差分保存できるようにする。(差分保存の仕様は readme.txt を参照)[Done 2016/1/4]
+・MD5を使った比較ができるようにする。
+  - BackuperEx.java に部分的に実装されているが不十分
+  - Backuper.java の VirFile を用いて実装しなおすのがよさそう。
 
 ----------------------------------------------------------------------
 2016/1/1
-�E/cygdrive/e/Backuper/mylib-1.0.0.jar �̒���class�t�@�C���Ɣ�ׂĂ݂��B
-  (�W�J��́Aorig/mylib-1.0.0)
-�EJD (Java Decompiler) ���g���ċt�R���p�C�����Ă݂����A���e�I�ɂ́A�܂����������������B
+・/cygdrive/e/Backuper/mylib-1.0.0.jar の中のclassファイルと比べてみた。
+  (展開先は、orig/mylib-1.0.0)
+・JD (Java Decompiler) を使って逆コンパイルしてみたが、内容的には、まったく同じだった。
   JD : http://jd.benow.ca/
 
 ----------------------------------------------------------------------
 2015/10/18
-�E���Ƃ̃t�@�C���͎��̂Ƃ��납�玝���Ă����B
+・もとのファイルは次のところから持ってきた。
   /cygdrive/e/BackupOld/MyWorks-old/mylib/trunk/
-�E/cygdrive/e/Backuper/mylib-1.0.0.jar �̒���class�t�@�C���Ɣ�ׂĂ݂��B
-�Epom.xml���C�����ăR���p�C���͂ł������A�萔�̐����������B(����URL���Q�l)
+・/cygdrive/e/Backuper/mylib-1.0.0.jar の中のclassファイルと比べてみた。
+・pom.xmlを修正してコンパイルはできたが、定数の数がちがう。(次のURLを参考)
   http://dev.classmethod.jp/server-side/java/classfile-reading/
 
 ----------------------------------------------------------------------
