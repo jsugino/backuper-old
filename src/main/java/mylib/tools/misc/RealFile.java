@@ -41,6 +41,7 @@ public class RealFile implements VirFile, Comparable<RealFile>
     this.file = new File(parent.file,sub);
   }
 
+  @Override
   public boolean isDirectory()
   throws IOException
   {
@@ -48,6 +49,7 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return file.isDirectory();
   }
 
+  @Override
   public boolean isFile()
   throws IOException
   {
@@ -55,26 +57,31 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return file.isFile();
   }
 
+  @Override
   public boolean exists()
   {
     return file.exists();
   }
 
+  @Override
   public boolean delete()
   {
     return file.delete();
   }
 
+  @Override
   public boolean mkdir()
   {
     return file.mkdir();
   }
 
+  @Override
   public boolean mkdirs()
   {
     return file.mkdirs();
   }
 
+  @Override
   public long lastModified()
   throws IOException
   {
@@ -82,22 +89,26 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return file.lastModified();
   }
 
+  @Override
   public boolean setLastModified( long modify )
   {
     return file.setLastModified(modify);
   }
 
+  @Override
   public boolean renameTo( VirFile tofile )
   {
     // TODO: RealFile への強制キャストは誤り。
     return file.renameTo(((RealFile)tofile).file);
   }
 
+  @Override
   public String getName()
   {
     return file.getName();
   }
 
+  @Override
   public long length()
   throws IOException
   {
@@ -113,16 +124,19 @@ public class RealFile implements VirFile, Comparable<RealFile>
     }
   }
 
+  @Override
   public VirFile getParentFile()
   {
     return new RealFile(file.getParentFile());
   }
 
+  @Override
   public String[] list()
   {
     return file.list();
   }
 
+  @Override
   public VirFile[] listFiles( final Set<Pattern> rejects )
   {
     File filelist[] = file.listFiles(new FileFilter(){
@@ -147,18 +161,21 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return retlist;
   }
 
+  @Override
   public InputStream openAsInputStream()
   throws IOException
   {
     return new FileInputStream(file);
   }
 
+  @Override
   public OutputStream openAsOutputStream()
   throws IOException
   {
     return new FileOutputStream(file);
   }
 
+  @Override
   public VirFile makeSubFile( String name )
   {
     return new RealFile(new File(file,name));
@@ -169,6 +186,7 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return file.hashCode();
   }
 
+  @Override
   public boolean equals( Object obj )
   {
     if ( obj == null || !(obj instanceof RealFile) ) return false;
@@ -189,6 +207,7 @@ public class RealFile implements VirFile, Comparable<RealFile>
     return file.toString().compareTo(pathname.toString());
   }
 
+  @Override
   public String toString()
   {
     return file == null ? "null" : file.toString();

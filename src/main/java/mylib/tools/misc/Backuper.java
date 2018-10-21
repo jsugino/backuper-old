@@ -142,7 +142,7 @@ public class Backuper
     System.err.println("-m : compare file fully for move");
     System.err.println("-e : execute copy files");
     System.err.println("-R : reject directory file list");
-    System.err.println("-j : ignore junction file");
+    System.err.println("-j : ignore junction/symlink file");
     System.err.println("-r : reject directory(relative from fromdir)");
     System.exit(1);
   }

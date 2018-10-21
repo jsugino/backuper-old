@@ -58,67 +58,79 @@ public class RemoteFile implements VirFile, Comparable<RemoteFile>
     this.ftpconnection = parent.ftpconnection;
   }
 
+  @Override
   public boolean isDirectory()
   throws IOException
   {
     return getFTPFile().isDirectory();
   }
 
+  @Override
   public boolean isFile()
   throws IOException
   {
     return getFTPFile().isFile();
   }
 
+  @Override
   public boolean exists()
   {
     // TODO: 本当は全部 true では、いけないかも。
     return true;
   }
 
+  @Override
   public boolean delete()
   throws IOException
   {
     return ftpconnection.getFTPClient().deleteFile(ftpconnection.topdir+relpath);
   }
 
+  @Override
   public boolean mkdir()
   {
     return false;
   }
 
+  @Override
   public boolean mkdirs()
   {
     return false;
   }
 
+  @Override
   public long lastModified()
   throws IOException
   {
     return getFTPFile().getTimestamp().getTimeInMillis();
   }
 
+  @Override
   public boolean setLastModified( long modify )
   {
     return false;
   }
 
+  @Override
   public boolean renameTo( VirFile tofile )
   {
     return false;
   }
 
+  @Override
   public String getName()
   {
     return name;
   }
 
+  @Override
   public long length()
   throws IOException
   {
     return getFTPFile().getSize();
   }
 
+  @Override
   public VirFile getParentFile()
   {
     int idx = relpath.lastIndexOf('/');
@@ -126,11 +138,13 @@ public class RemoteFile implements VirFile, Comparable<RemoteFile>
     return new RemoteFile( relpath.substring(0,idx), ftpconnection );
   }
 
+  @Override
   public String[] list()
   {
     return null;
   }
 
+  @Override
   public VirFile[] listFiles( final Set<Pattern> rejects )
   throws IOException
   {
@@ -161,6 +175,7 @@ public class RemoteFile implements VirFile, Comparable<RemoteFile>
     return ftpfile;
   }
 
+  @Override
   public InputStream openAsInputStream()
   throws IOException
   {
@@ -169,17 +184,20 @@ public class RemoteFile implements VirFile, Comparable<RemoteFile>
     return ftpconnection.new FinalizeInputStream(ins);
   }
 
+  @Override
   public OutputStream openAsOutputStream()
   throws IOException
   {
     return null;
   }
 
+  @Override
   public VirFile makeSubFile( String name )
   {
     return new RemoteFile(this.relpath+"/"+name,ftpconnection);
   }
 
+  @Override
   public boolean equals( Object obj )
   {
     if ( obj == null || !(obj instanceof RemoteFile) ) return false;
@@ -189,16 +207,19 @@ public class RemoteFile implements VirFile, Comparable<RemoteFile>
       relpath.equals(target.relpath);
   }
 
+  @Override
   public int hashCode()
   {
     return ftpconnection.hashCode()+relpath.hashCode();
   }
 
+  @Override
   public String toString()
   {
     return ftpconnection.toString()+relpath;
   }
 
+  @Override
   public int compareTo( RemoteFile pathname )
   {
     return relpath.compareTo(pathname.relpath);
