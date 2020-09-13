@@ -30,6 +30,20 @@ import static mylib.tools.misc.BackuperTest.*;
 
 /**
 * FTPのテスト
+* このテストプログラムを実行するための条件：
+* <ul>
+* <item>
+* ・マイコンピュータ→(右クリック)→管理　を選ぶ
+* ・サービスとアプリケーション→インターネットインフォメーションサービス→FTPサイト
+*   →既定のFTPサイト→(右クリック)→プロパティ　を選ぶ
+* ・ホームディレクトリタブ　を選ぶ。
+* 　・ローカルパスにこの開発ディレクトリ(pom.xlsがあるディレクトリ D:\MyWorks\mylib\trunk)を設定する。
+* 　・読み取り/書き取り/ログアクセス　すべて、チェックを入れる。
+* 　・ディレクトリの表示スタイルを UNIX とする。
+* ・セキュリティアカウントタブ　を選ぶ。
+* 　・匿名アクセスを許可する　をはずす。(anonymous ログインできないようにする。)
+* ・c:/TEMP/work ファイルにテスト用の UserID と Password を設定する。
+* </ul>
 */
 public class BackuperFtpTest // extends MylibTestCase
 {
